@@ -2,7 +2,16 @@
 
 MCP Extension to aid you in searching and writing literature reviews
 
+## What it can do
+
+`paperpal` gives your LLMs access to [arxiv](https://www.arxiv.org) and semantic search of papers on [Hugging Face papers](https://huggingface.co/papers)
+
+Here's an example conversation digging more about KV Cache techniques:
+    https://claude.ai/share/49a14959-ca5f-4382-a00a-83030ffd081d
+
 ## Quickstart
+
+There are many different ways with which you can interact with an MCP server.
 
 ### Claude Desktop App
 
@@ -33,3 +42,12 @@ For example on MacOS:
 ```
 
 Restart your Claude Desktop App and you should see it appear.
+
+
+### Cursor
+
+TODO
+
+### Overleaf
+
+TODO
