@@ -41,9 +41,6 @@ async def get_arxiv_info_for_papers_async(papers: list[Paper]) -> list[str]:
         tasks = [get_arxiv_info_async(paper.id, client) for paper in papers]
         return await asyncio.gather(*tasks)
 
-# def get_arxiv_info_for_papers(papers: list[Paper]) -> list[str]:
-#     """Get the Arxiv info for a list of papers."""
-#     return asyncio.run(get_arxiv_info_for_papers_async(papers))
 
 def stringify_papers(papers: list[Paper]) -> str:
     """Format a list of papers into a string."""
@@ -52,7 +49,7 @@ def stringify_papers(papers: list[Paper]) -> str:
     return f"List of papers:\n---\n{papers_str}\n---\n"
 
 
-def semantic_search_huggingface_papers(query: str, top_n: int = 5) -> list[Paper]:
+def semantic_search_huggingface_papers(query: str, top_n: int) -> list[Paper]:
     """Search for papers on HuggingFace."""
 
     url = f"https://huggingface.co/api/papers/search?q={query}"
@@ -70,7 +67,7 @@ def semantic_search_huggingface_papers(query: str, top_n: int = 5) -> list[Paper
 
 
 @mcp.tool()
-async def search_papers(query: str, top_n: int = 5) -> str:
+async def search_papers(query: str, top_n: int = 10) -> str:
     """Search for papers on HuggingFace.
 
     It uses semantic search to find the most relevant papers. It will automatically determine if it should use keywords or a natural language query, so format your query accordingly.
