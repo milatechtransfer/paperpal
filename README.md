@@ -2,12 +2,21 @@
 
 MCP Extension to aid you in searching and writing literature reviews
 
-## What it can do
+> Check out this [conversation with Claude](https://claude.ai/share/49a14959-ca5f-4382-a00a-83030ffd081d) to see what it can do
 
-`paperpal` gives your LLMs access to [arxiv](https://www.arxiv.org) and semantic search of papers on [Hugging Face papers](https://huggingface.co/papers)
+## How it works
 
-Here's an example conversation digging more about KV Cache techniques:
-    https://claude.ai/share/49a14959-ca5f-4382-a00a-83030ffd081d
+`paperpal` gives your LLMs access to [arxiv](https://www.arxiv.org) and [Hugging Face papers](https://huggingface.co/papers).
+You can then have a natural conversation with your favourite LLMs (e.g. Claude) and have it guide you.
+
+You can:
+
+* Discuss papers
+* Look for new papers
+* Organize ideas for liteature reviews
+* etc.
+
+Of course, this tool is as good as the sum of its parts. LLMs can still hallucinate, and semantic search is never perfect. 
 
 ## Quickstart
 
