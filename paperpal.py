@@ -73,6 +73,8 @@ def semantic_search_huggingface_papers(query: str, top_n: int = 5) -> list[Paper
 async def search_papers(query: str, top_n: int = 5) -> str:
     """Search for papers on HuggingFace.
 
+    It uses semantic search to find the most relevant papers. It will automatically determine if it should use keywords or a natural language query, so format your query accordingly.
+
     Returns a list of papers with the title, summary, ID, and upvotes.
 
     Args:
