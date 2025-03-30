@@ -2,7 +2,7 @@
 
 MCP Extension to aid you in searching and writing literature reviews
 
-> Check out this [conversation with Claude](https://claude.ai/share/49a14959-ca5f-4382-a00a-83030ffd081d) to see what it can do
+> Check out this [conversation with Claude](https://claude.ai/share/0572fbd9-3ba2-4143-9f7f-5cae205c6d0d) to see what it can do
 
 ## How it works
 
@@ -16,7 +16,7 @@ You can:
 * Organize ideas for liteature reviews
 * etc.
 
-Of course, this tool is as good as the sum of its parts. LLMs can still hallucinate, and semantic search is never perfect. 
+Of course, this tool is as good as the sum of its parts. LLMs can still hallucinate, and semantic search is never perfect.
 
 ## Quickstart
 
@@ -55,8 +55,27 @@ Restart your Claude Desktop App and you should see it appear.
 
 ### Cursor
 
-TODO
+> If this is your first time using an MCP server for Claude Desktop App, see https://docs.cursor.com/context/model-context-protocol#remote-development
 
-### Overleaf
+First, clone this repository locally:
 
-TODO
+    git clone https://github.com/jerpint/paperpal
+
+
+Add this to your `mcp.json` cursor file:
+
+```
+{
+  "mcpServers": {
+    "paperpal": {
+      "command": "/Users/jeremypinto/.cargo/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/jeremypinto/paperpal",
+        "run",
+        "paperpal.py"
+      ]
+    }
+  }
+}
+```
