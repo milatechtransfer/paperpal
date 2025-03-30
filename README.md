@@ -55,14 +55,14 @@ Restart your Claude Desktop App and you should see it appear.
 
 ### Cursor
 
-> If this is your first time using an MCP server for Claude Desktop App, see https://docs.cursor.com/context/model-context-protocol#remote-development
+> If this is your first time using an MCP server for Cursor, see https://docs.cursor.com/context/model-context-protocol#remote-development
 
 First, clone this repository locally:
 
     git clone https://github.com/jerpint/paperpal
 
 
-Add this to your `mcp.json` cursor file:
+Add this to the root of the project in a `.cursor/mcp.json` file:
 
 ```
 {
