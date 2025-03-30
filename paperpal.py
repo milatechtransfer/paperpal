@@ -68,17 +68,16 @@ def semantic_search_huggingface_papers(query: str, top_n: int) -> list[Paper]:
 
 @mcp.tool()
 async def search_papers(query: str, top_n: int = 10) -> str:
-    """Search for papers on HuggingFace.
-
-    It uses semantic search to find the most relevant papers. It will automatically determine if it should use keywords or a natural language query, so format your query accordingly.
-
-    Returns a list of papers with the title, summary, ID, and upvotes.
+    """Search for papers on HuggingFace using semantic search.
 
     Args:
-        query (str): The query to search for.
-        top_n (int): The number of papers to return.
+        query (str): The query term to search for. It will automatically determine if it should use keywords or a natural language query, so format your queries accordingly.
+        top_n (int): The number of papers to return. Default is 10, but you can set it to any number.
+
+    Returns:
+        str: A list of papers with the title, summary, ID, and upvotes.
     """
-    papers = semantic_search_huggingface_papers(query, top_n)
+    papers: list[Paper] = semantic_search_huggingface_papers(query, top_n)
 
     return stringify_papers(papers)
 
