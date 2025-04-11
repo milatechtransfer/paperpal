@@ -79,3 +79,11 @@ Add this to the root of the project in a `.cursor/mcp.json` file:
   }
 }
 ```
+
+
+## Development
+
+Use the mcp dev tools to inspect the server:
+
+    uv run mcp dev mcp_server.py
+
