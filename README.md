@@ -41,9 +41,9 @@ For example on MacOS:
       "command": "uv",
       "args": [
         "--directory",
-        "/Users/<username>/paperpal",
+        "/Users/<username>/paperpal/paperpal",
         "run",
-        "paperpal.py"
+        "mcp_server.py"
       ]
     }
   }
@@ -68,12 +68,12 @@ Add this to the root of the project in a `.cursor/mcp.json` file:
 {
   "mcpServers": {
     "paperpal": {
-      "command": "/Users/jeremypinto/.cargo/bin/uv",
+      "command": "uv",
       "args": [
         "--directory",
-        "/Users/jeremypinto/paperpal",
+        "/Users/<username>/paperpal/paperpal",
         "run",
-        "paperpal.py"
+        "mcp_server.py"
       ]
     }
   }
