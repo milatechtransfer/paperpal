@@ -1,3 +1,5 @@
+🚨 Development has moved to https://github.com/mila-iqia/paperpal
+
 # paperpal
 
 MCP Extension to aid you in searching and writing literature reviews
