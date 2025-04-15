@@ -2,6 +2,7 @@ import httpx
 import asyncio
 from pydantic import BaseModel
 
+
 class ArxivPaper(BaseModel):
     title: str | None = None
     summary: str | None = None
@@ -17,6 +18,7 @@ class ArxivPaper(BaseModel):
             return f"Error: {self.error_message}"
         else:
             return self.raw_arxiv_info
+
 
 def parse_arxiv_info(raw_arxiv_info: str) -> ArxivPaper:
     """Parse the raw txt Arxiv info for a paper from arxiv-txt.org into a ArxivPaper object.
@@ -41,15 +43,15 @@ def parse_arxiv_info(raw_arxiv_info: str) -> ArxivPaper:
     # BibTeX
     [bibtex entry]
     """
-    lines = raw_arxiv_info.strip().split('\n')
+    lines = raw_arxiv_info.strip().split("\n")
     current_section = None
     data = {
-        'title': '',
-        'summary': '',
-        'authors': [],
-        'categories': [],
-        'arxiv_id': '',
-        'url': ''
+        "title": "",
+        "summary": "",
+        "authors": [],
+        "categories": [],
+        "arxiv_id": "",
+        "url": "",
     }
 
     for line in lines:
@@ -57,32 +59,35 @@ def parse_arxiv_info(raw_arxiv_info: str) -> ArxivPaper:
         if not line:
             continue
 
-        if line.startswith('# '):
+        if line.startswith("# "):
             current_section = line[2:].lower()
             continue
 
-        if current_section == 'title':
-            data['title'] = line
-        elif current_section == 'authors':
-            authors = [a.strip() for a in line.split(',')]
-            data['authors'].extend(authors)
-        elif current_section == 'abstract':
-            data['summary'] += line + ' '
-        elif current_section == 'categories':
-            categories = [c.strip() for c in line.split(',')]
-            data['categories'].extend(categories)
-        elif current_section == 'publication details':
-            if 'arXiv ID:' in line:
-                data['arxiv_id'] = line.split('arXiv ID:')[1].strip()
-                data['url'] = f"https://arxiv.org/abs/{data['arxiv_id']}"
+        if current_section == "title":
+            data["title"] = line
+        elif current_section == "authors":
+            authors = [a.strip() for a in line.split(",")]
+            data["authors"].extend(authors)
+        elif current_section == "abstract":
+            data["summary"] += line + " "
+        elif current_section == "categories":
+            categories = [c.strip() for c in line.split(",")]
+            data["categories"].extend(categories)
+        elif current_section == "publication details":
+            if "arXiv ID:" in line:
+                data["arxiv_id"] = line.split("arXiv ID:")[1].strip()
+                data["url"] = f"https://arxiv.org/abs/{data['arxiv_id']}"
 
     # Clean up the summary by removing extra spaces
-    data['summary'] = data['summary'].strip()
-    data['raw_arxiv_info'] = raw_arxiv_info
+    data["summary"] = data["summary"].strip()
+    data["raw_arxiv_info"] = raw_arxiv_info
 
     return ArxivPaper(**data)
 
-async def get_arxiv_info_single(arxiv_id: str, client: httpx.AsyncClient) -> ArxivPaper | None:
+
+async def get_arxiv_info_single(
+    arxiv_id: str, client: httpx.AsyncClient
+) -> ArxivPaper | None:
     """Get the Arxiv info for a paper asynchronously.
 
     Args:
@@ -101,7 +106,10 @@ async def get_arxiv_info_single(arxiv_id: str, client: httpx.AsyncClient) -> Arx
         print(f"Error fetching Arxiv info for paper {arxiv_id}: {e}")
         return ArxivPaper(arxiv_id=arxiv_id, error_message=str(e))
 
-async def get_arxiv_info_batch(arxiv_ids: list[str], batch_size: int) -> list[ArxivPaper | None]:
+
+async def get_arxiv_info_batch(
+    arxiv_ids: list[str], batch_size: int
+) -> list[ArxivPaper | None]:
     """Get the Arxiv info for a list of papers concurrently, processing in batches.
 
     Args:
@@ -115,16 +123,20 @@ async def get_arxiv_info_batch(arxiv_ids: list[str], batch_size: int) -> list[Ar
 
     # Process papers in batches
     for i in range(0, len(arxiv_ids), batch_size):
-        batch_arxiv_ids = arxiv_ids[i:i + batch_size]
+        batch_arxiv_ids = arxiv_ids[i : i + batch_size]
         async with httpx.AsyncClient() as client:
-            tasks = [get_arxiv_info_single(arxiv_id, client) for arxiv_id in batch_arxiv_ids]
+            tasks = [
+                get_arxiv_info_single(arxiv_id, client) for arxiv_id in batch_arxiv_ids
+            ]
             batch_results = await asyncio.gather(*tasks)
             results.extend(batch_results)
 
     return results
 
 
-async def get_arxiv_info_from_arxiv_ids(arxiv_ids: list[str], batch_size: int = 5) -> list[str]:
+async def get_arxiv_info_from_arxiv_ids(
+    arxiv_ids: list[str], batch_size: int = 5
+) -> list[str]:
     """Get the Arxiv info for a list of papers concurrently, processing in batches.
 
     Args:
@@ -138,4 +150,3 @@ async def get_arxiv_info_from_arxiv_ids(arxiv_ids: list[str], batch_size: int = 
         return await get_arxiv_info_batch(arxiv_ids, batch_size)
     else:
         raise ValueError("arxiv_ids must be a list of strings")
-
