@@ -12,8 +12,9 @@ mcp = FastMCP(
 )
 
 
-
-def stringify_papers(papers: list[ArxivPaper | HuggingFacePaper | SemanticScholarPaper]) -> str:
+def stringify_papers(
+    papers: list[ArxivPaper | HuggingFacePaper | SemanticScholarPaper],
+) -> str:
     """Format a list of papers into a string."""
 
     papers_str = "\n---\n".join([str(paper) for paper in papers])
@@ -67,7 +68,6 @@ async def search_papers_on_semantic_scholar(query: str, top_n: int = 10) -> str:
     return stringify_papers(papers)
 
 
-
 if __name__ == "__main__":
     # Initialize and run the server
-    mcp.run(transport='stdio')
+    mcp.run(transport="stdio")

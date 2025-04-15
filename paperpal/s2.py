@@ -3,6 +3,7 @@ import asyncio
 from pydantic import BaseModel
 from constants import USER_AGENT
 
+
 class SemanticScholarPaper(BaseModel):
     title: str | None = None
     abstract: str | None = None
@@ -19,6 +20,7 @@ class SemanticScholarPaper(BaseModel):
             return f"Error: {self.error_message}"
         else:
             return f"Title: {self.title}\nAbstract: {self.abstract}\nAuthors: {self.authors}\nPaper ID: {self.paper_id}\nURL: {self.url}\nTLDR: {self.tldr}\nCitation: {self.citation}"
+
 
 def parse_semantic_scholar_paper(data) -> SemanticScholarPaper:
     """
@@ -53,13 +55,18 @@ def parse_semantic_scholar_paper(data) -> SemanticScholarPaper:
             "tldr": tldr_text,
             "citation": citation,
             "raw_info": data,
-            "error_message": None
+            "error_message": None,
         }
         return SemanticScholarPaper(**data)
     except Exception as e:
-        return SemanticScholarPaper(error_message=f"Failed to parse paper data: {str(e)}")
+        return SemanticScholarPaper(
+            error_message=f"Failed to parse paper data: {str(e)}"
+        )
 
-def search_semantic_scholar(query: str, num_papers: int = 20) -> list[SemanticScholarPaper]:
+
+def search_semantic_scholar(
+    query: str, num_papers: int = 20
+) -> list[SemanticScholarPaper]:
     """Search for papers on Semantic Scholar.
 
     Args:
@@ -77,25 +84,31 @@ def search_semantic_scholar(query: str, num_papers: int = 20) -> list[SemanticSc
     try:
         response = httpx.get(
             "https://api.semanticscholar.org/graph/v1/paper/search",
-            params={
-                "query": query,
-                "limit": num_papers,
-                "fields": fields
-            },
-            headers={"User-Agent": USER_AGENT}
+            params={"query": query, "limit": num_papers, "fields": fields},
+            headers={"User-Agent": USER_AGENT},
         )
 
         # Check specifically for 429 status code
         if response.status_code == 429:
-            return [SemanticScholarPaper(
-                error_message=f"Rate limit exceeded. Try again after later."
-            )]
+            return [
+                SemanticScholarPaper(
+                    error_message=f"Rate limit exceeded. Try again after later."
+                )
+            ]
 
         response.raise_for_status()
-        data = response.json()['data']
+        data = response.json()["data"]
         papers = [parse_semantic_scholar_paper(paper) for paper in data]
         return papers
     except httpx.HTTPError as e:
-        return [SemanticScholarPaper(error_message=f"Failed to fetch papers from Semantic Scholar: {str(e)}")]
+        return [
+            SemanticScholarPaper(
+                error_message=f"Failed to fetch papers from Semantic Scholar: {str(e)}"
+            )
+        ]
     except Exception as e:
-        return [SemanticScholarPaper(error_message=f"Unexpected error while searching Semantic Scholar: {str(e)}")]
+        return [
+            SemanticScholarPaper(
+                error_message=f"Unexpected error while searching Semantic Scholar: {str(e)}"
+            )
+        ]
