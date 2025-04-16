@@ -9,6 +9,7 @@ import asyncio
 from utils import create_author_short
 from bibtex import add_bibtex_to_papers
 
+
 class ArxivPaper(BaseModel):
     title: Optional[str] = None
     summary: Optional[str] = None
@@ -119,7 +120,6 @@ async def search_arxiv(
     http://export.arxiv.org/api/query?search_query=all:electron+AND+all:proton&max_results=50
     """
 
-
     base_url = "http://export.arxiv.org/api/query"
     url = f"{base_url}?search_query={search_query}"
 
@@ -194,16 +194,17 @@ async def search_arxiv(
         return [ArxivPaper(error_message=f"An unexpected error occurred: {str(e)}")]
 
 
-
 # Example usage:
 if __name__ == "__main__":
     # Option 1: Search with BibTeX fetching
 
     search_query = 'ti:"attention mechanism"+AND+abs:"transformer"+AND+cat:cs.CL+AND+cat:cs.LG+ANDNOT+ti:survey&max_results=10&sortBy=submittedDate&sortOrder=descending'
-    papers = asyncio.run(search_arxiv(
-        search_query,
-        fetch_bibtex_data=True,
-    ))
+    papers = asyncio.run(
+        search_arxiv(
+            search_query,
+            fetch_bibtex_data=True,
+        )
+    )
 
     print(f"Found {len(papers)} papers")
 

@@ -34,7 +34,9 @@ async def search_papers_on_huggingface(query: str, top_n: int = 10) -> str:
     Returns:
         str: A list of papers with the title, summary, ID, upvotes, authors and bibtex.
     """
-    papers: list[HuggingFacePaper] = await semantic_search_huggingface_papers(query, top_n)
+    papers: list[HuggingFacePaper] = await semantic_search_huggingface_papers(
+        query, top_n
+    )
 
     return stringify_papers(papers)
 
@@ -58,7 +60,9 @@ async def search_papers_on_semantic_scholar(query: str, top_n: int = 10) -> str:
 
 
 @mcp.tool()
-async def search_papers_on_arxiv(search_query: str, fetch_bibtex_data: bool = True) -> str:
+async def search_papers_on_arxiv(
+    search_query: str, fetch_bibtex_data: bool = True
+) -> str:
     """
     Search arXiv for papers matching your query.
 
@@ -97,7 +101,9 @@ async def search_papers_on_arxiv(search_query: str, fetch_bibtex_data: bool = Tr
     Only use the query syntax if you know what you're doing and once you've searched for other papers with simpler queries.
     """
 
-    papers: list[ArxivPaper] = await search_arxiv(search_query, fetch_bibtex_data=fetch_bibtex_data)
+    papers: list[ArxivPaper] = await search_arxiv(
+        search_query, fetch_bibtex_data=fetch_bibtex_data
+    )
     return stringify_papers(papers)
 
 

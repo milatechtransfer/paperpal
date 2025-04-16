@@ -69,9 +69,8 @@ async def fetch_bibtex_batch(
 
     return results
 
-async def add_bibtex_to_papers(
-    papers: List[Any], batch_size: int = 5
-) -> List[Any]:
+
+async def add_bibtex_to_papers(papers: List[Any], batch_size: int = 5) -> List[Any]:
     # TODO: Don't pass Any, pass arxivpaper or huggingface paper but import them to avoid circular imports
     """
     Add BibTeX data to a list of ArxivPaper objects.
@@ -105,4 +104,3 @@ async def add_bibtex_to_papers(
             paper.bibtex = bibtex_dict[paper.arxiv_id]
 
     return papers
-

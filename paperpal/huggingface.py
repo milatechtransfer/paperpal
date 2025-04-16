@@ -92,7 +92,9 @@ async def semantic_search_huggingface_papers(
 
 if __name__ == "__main__":
     query = "trasformers SOTA TTS models"
-    papers = asyncio.run(semantic_search_huggingface_papers(query, top_n=10, fetch_bibtex_data=True))
+    papers = asyncio.run(
+        semantic_search_huggingface_papers(query, top_n=10, fetch_bibtex_data=True)
+    )
 
     # Print results
     for i, paper in enumerate(papers, 1):
