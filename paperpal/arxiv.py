@@ -1,152 +1,231 @@
 import httpx
+import xml.etree.ElementTree as ET
+import urllib.parse
+from typing import List, Optional, Dict
+from pydantic import BaseModel, model_validator
+from constants import USER_AGENT
 import asyncio
-from pydantic import BaseModel
 
+from utils import create_author_short
+from bibtex import add_bibtex_to_papers
 
 class ArxivPaper(BaseModel):
-    title: str | None = None
-    summary: str | None = None
-    authors: list[str] | None = None
-    categories: list[str] | None = None
-    arxiv_id: str | None = None
-    url: str | None = None
-    raw_arxiv_info: str | None = None
-    error_message: str | None = None
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    authors: Optional[List[str]] = None
+    categories: Optional[List[str]] = None
+    arxiv_id: Optional[str] = None
+    pdf_url: Optional[str] = None
+    error_message: Optional[str] = None
+    bibtex: Optional[str] = None
+    arxiv_url: Optional[str] = None
+    author_short: Optional[str] = None
+
+    @model_validator(mode="after")
+    def create_url(self):
+        self.arxiv_url = f"https://arxiv.org/abs/{self.arxiv_id}"
+        return self
+
+    @model_validator(mode="after")
+    def set_author_short(self):
+        self.author_short = create_author_short(self.authors)
+        return self
 
     def __str__(self) -> str:
         if self.error_message:
             return f"Error: {self.error_message}"
         else:
-            return self.raw_arxiv_info
+            return f"Title: {self.title}\nAuthors: {self.author_short}\nPaper ID: {self.arxiv_id}\nURL: {self.arxiv_url}\nCitation: {self.bibtex}"
 
 
-def parse_arxiv_info(raw_arxiv_info: str) -> ArxivPaper:
-    """Parse the raw txt Arxiv info for a paper from arxiv-txt.org into a ArxivPaper object.
-    The input should be in the following markdown format:
-
-    # Title
-    [title]
-
-    # Authors
-    [comma-separated authors]
-
-    # Abstract
-    [abstract text]
-
-    # Categories
-    [comma-separated categories]
-
-    # Publication Details
-    - Published: [date]
-    - arXiv ID: [id]
-
-    # BibTeX
-    [bibtex entry]
+async def search_arxiv(
+    search_query: str, fetch_bibtex_data: bool = True
+) -> List[ArxivPaper]:
     """
-    lines = raw_arxiv_info.strip().split("\n")
-    current_section = None
-    data = {
-        "title": "",
-        "summary": "",
-        "authors": [],
-        "categories": [],
-        "arxiv_id": "",
-        "url": "",
-    }
+    Search arXiv for papers matching the query.
 
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
+    Parameters:
+    -----------
+    search_query : str
+        The search query string. Can include field-specific searches.
+        This will be directly inserted into the URL as:
+        "http://export.arxiv.org/api/query?search_query={search_query}"
 
-        if line.startswith("# "):
-            current_section = line[2:].lower()
-            continue
+        Examples:
+        - 'all:electron' (search for 'electron' in all fields)
+        - 'ti:neural networks' (search for 'neural networks' in title)
+        - 'au:goodfellow' (search for author 'goodfellow')
+        - 'all:electron+AND+all:proton' (search for both terms)
+        - 'cat:cs.AI' (search in specific category)
 
-        if current_section == "title":
-            data["title"] = line
-        elif current_section == "authors":
-            authors = [a.strip() for a in line.split(",")]
-            data["authors"].extend(authors)
-        elif current_section == "abstract":
-            data["summary"] += line + " "
-        elif current_section == "categories":
-            categories = [c.strip() for c in line.split(",")]
-            data["categories"].extend(categories)
-        elif current_section == "publication details":
-            if "arXiv ID:" in line:
-                data["arxiv_id"] = line.split("arXiv ID:")[1].strip()
-                data["url"] = f"https://arxiv.org/abs/{data['arxiv_id']}"
+        Complex ML literature review example:
+        - 'ti:"attention mechanism"+AND+abs:"transformer"+AND+cat:cs.CL+AND+cat:cs.LG+ANDNOT+ti:survey&max_results=100&sortBy=submittedDate&sortOrder=descending'
+          (Find papers with "attention mechanism" in title AND "transformer" in abstract,
+           in both computational linguistics AND machine learning categories,
+           excluding survey papers, limited to 100 results, sorted by newest first)
 
-    # Clean up the summary by removing extra spaces
-    data["summary"] = data["summary"].strip()
-    data["raw_arxiv_info"] = raw_arxiv_info
+        Search operators:
+        - AND: both terms must be present
+        - OR: either term must be present
+        - ANDNOT: first term without second term
 
-    return ArxivPaper(**data)
+        Search fields:
+        - ti: title
+        - au: author
+        - abs: abstract
+        - co: comment
+        - jr: journal reference
+        - cat: category
+        - all: all fields
 
+    fetch_bibtex_data : bool, optional
+        Whether to fetch BibTeX data for each paper (default: True)
 
-async def get_arxiv_info_single(
-    arxiv_id: str, client: httpx.AsyncClient
-) -> ArxivPaper | None:
-    """Get the Arxiv info for a paper asynchronously.
+    Additional parameters (pass as part of search_query):
+    ---------------------------------------------------
+    max_results : int
+        Maximum number of results to return (default: 10, max allowed: 2000)
+        Example: 'all:electron&max_results=100'
 
-    Args:
-        arxiv_id (str): The ID of the paper to get the Arxiv info for, e.g. "2503.01469"
+    start : int
+        Index of first result to return (default: 0)
+        Example: 'all:electron&start=50'
+
+    sortBy : str
+        Sort order for results (default: 'relevance')
+        Options: 'relevance', 'lastUpdatedDate', 'submittedDate'
+        Example: 'all:electron&sortBy=lastUpdatedDate'
+
+    sortOrder : str
+        Direction of sort (default: 'descending')
+        Options: 'ascending', 'descending'
+        Example: 'all:electron&sortBy=submittedDate&sortOrder=ascending'
 
     Returns:
-        ArxivPaper | None: The parsed Arxiv paper info, or None if there was an error
+    --------
+    List[ArxivPaper]
+        A list of ArxivPaper objects containing paper information
+
+    Notes:
+    ------
+    The URL is constructed as:
+    "http://export.arxiv.org/api/query?search_query={search_query}"
+
+    For more complex queries, you can see the arXiv API documentation at:
+    https://arxiv.org/help/api/user-manual
+
+    Examples of API URLs:
+    http://export.arxiv.org/api/query?search_query=all:electron
+    http://export.arxiv.org/api/query?search_query=all:electron+AND+all:proton&max_results=50
     """
+
+
+    base_url = "http://export.arxiv.org/api/query"
+    url = f"{base_url}?search_query={search_query}"
+
+    # Set up headers
+    headers = {"User-Agent": USER_AGENT}
+
     try:
-        url = f"https://www.arxiv-txt.org/raw/abs/{arxiv_id}"
-        response = await client.get(url)
-        response.raise_for_status()
-        raw_arxiv_info = response.text
-        return parse_arxiv_info(raw_arxiv_info)
-    except Exception as e:
-        print(f"Error fetching Arxiv info for paper {arxiv_id}: {e}")
-        return ArxivPaper(arxiv_id=arxiv_id, error_message=str(e))
+        # Send the request using httpx
+        response = httpx.get(url, headers=headers, timeout=30.0)
+        response.raise_for_status()  # Raise exception for HTTP errors
+        data = response.text
 
+        # Parse the XML response
+        root = ET.fromstring(data)
 
-async def get_arxiv_info_batch(
-    arxiv_ids: list[str], batch_size: int
-) -> list[ArxivPaper | None]:
-    """Get the Arxiv info for a list of papers concurrently, processing in batches.
+        # Define namespaces
+        namespaces = {
+            "atom": "http://www.w3.org/2005/Atom",
+            "arxiv": "http://arxiv.org/schemas/atom",
+            "opensearch": "http://a9.com/-/spec/opensearch/1.1/",
+        }
 
-    Args:
-        arxiv_ids (list[str]): The IDs of the papers to get the Arxiv info for, e.g. ["2503.01469", "2503.01470"]
-        batch_size (int): Number of papers to process concurrently in each batch. Defaults to 5.
+        papers: list[ArxivPaper] = []
 
-    Returns:
-        dict[str, ArxivPaper | None]: Dictionary of Arxiv info for all papers, with paper IDs as keys
-    """
-    results = []
+        # Extract information for each entry
+        for entry in root.findall(".//atom:entry", namespaces):
+            # Extract the arXiv ID from the URL
+            id_url = entry.find("./atom:id", namespaces).text
+            arxiv_id = id_url.split("/")[-1]
 
-    # Process papers in batches
-    for i in range(0, len(arxiv_ids), batch_size):
-        batch_arxiv_ids = arxiv_ids[i : i + batch_size]
-        async with httpx.AsyncClient() as client:
-            tasks = [
-                get_arxiv_info_single(arxiv_id, client) for arxiv_id in batch_arxiv_ids
+            # Get PDF URL
+            pdf_link = entry.find('./atom:link[@title="pdf"]', namespaces)
+            pdf_url = pdf_link.get("href") if pdf_link is not None else None
+
+            # Get authors
+            authors = [
+                author.find("./atom:name", namespaces).text
+                for author in entry.findall("./atom:author", namespaces)
             ]
-            batch_results = await asyncio.gather(*tasks)
-            results.extend(batch_results)
 
-    return results
+            # Get categories
+            categories = [
+                category.get("term")
+                for category in entry.findall("./atom:category", namespaces)
+            ]
+
+            # Create ArxivPaper object
+            paper = ArxivPaper(
+                title=entry.find("./atom:title", namespaces).text.strip(),
+                summary=entry.find("./atom:summary", namespaces).text.strip(),
+                authors=authors,
+                categories=categories,
+                arxiv_id=arxiv_id,
+                pdf_url=pdf_url,
+                bibtex=None,  # Will be populated later if fetch_bibtex_data is True
+            )
+
+            papers.append(paper)
+
+        # If fetch_bibtex_data is True, fetch BibTeX data for all papers
+        if fetch_bibtex_data and papers:
+            papers = await add_bibtex_to_papers(papers)
+
+        return papers
+
+    except httpx.HTTPError as e:
+        # Return a single ArxivPaper with an error message
+        return [ArxivPaper(error_message=f"HTTP error occurred: {str(e)}")]
+    except ET.ParseError as e:
+        return [ArxivPaper(error_message=f"XML parsing error: {str(e)}")]
+    except Exception as e:
+        return [ArxivPaper(error_message=f"An unexpected error occurred: {str(e)}")]
 
 
-async def get_arxiv_info_from_arxiv_ids(
-    arxiv_ids: list[str], batch_size: int = 5
-) -> list[str]:
-    """Get the Arxiv info for a list of papers concurrently, processing in batches.
 
-    Args:
-        arxiv_ids list[str]: The IDs of the papers to get the Arxiv info for, e.g. ["2503.01469", "2503.01470"]
-        batch_size (int): Number of papers to process concurrently in each batch. Defaults to 5.
+# Example usage:
+if __name__ == "__main__":
+    # Option 1: Search with BibTeX fetching
 
-    Returns:
-        list[str]: List of Arxiv info for all papers, in the same order as input paper_ids
-    """
-    if isinstance(arxiv_ids, list):
-        return await get_arxiv_info_batch(arxiv_ids, batch_size)
-    else:
-        raise ValueError("arxiv_ids must be a list of strings")
+    search_query = 'ti:"attention mechanism"+AND+abs:"transformer"+AND+cat:cs.CL+AND+cat:cs.LG+ANDNOT+ti:survey&max_results=10&sortBy=submittedDate&sortOrder=descending'
+    papers = asyncio.run(search_arxiv(
+        search_query,
+        fetch_bibtex_data=True,
+    ))
+
+    print(f"Found {len(papers)} papers")
+
+    # Print results
+    for i, paper in enumerate(papers, 1):
+        if paper.error_message:
+            print(f"Error: {paper.error_message}")
+            continue
+
+        print(f"\n--- Paper {i} ---")
+        print(f"Title: {paper.title}")
+        print(f"Authors: {', '.join(paper.authors or [])}")
+        print(f"Categories: {', '.join(paper.categories or [])}")
+        print(f"arXiv ID: {paper.arxiv_id}")
+        print(f"PDF URL: {paper.pdf_url}")
+        print(
+            f"Summary: {paper.summary[:200]}..."
+            if paper.summary
+            else "No summary available"
+        )
+        print(
+            f"BibTeX: {paper.bibtex[:150]}..."
+            if paper.bibtex
+            else "No BibTeX available"
+        )
