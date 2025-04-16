@@ -6,7 +6,7 @@ MCP Extension to aid you in searching and writing literature reviews
 
 ## How it works
 
-`paperpal` gives your LLMs access to [arxiv](https://www.arxiv.org) and [Hugging Face papers](https://huggingface.co/papers).
+`paperpal` gives your LLMs access to [arxiv](https://www.arxiv.org), [Hugging Face papers](https://huggingface.co/papers) and [semantic scholar](https://www.semanticscholar.org/).
 You can then have a natural conversation with your favourite LLMs (e.g. Claude) and have it guide you.
 
 You can:
