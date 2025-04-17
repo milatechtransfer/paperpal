@@ -28,7 +28,7 @@ There are many different ways with which you can interact with an MCP server.
 
 First, clone this repository locally:
 
-    git clone https://github.com/jerpint/paperpal
+    git clone https://github.com/milatechtransfer/paperpal
 
 Next, add the extension to your app. Open your configuration file (on macOS this should be `~/Library/Application Support/Claude/claude_desktop_config.json`) and and add the following to the extension:
 
@@ -59,7 +59,7 @@ Restart your Claude Desktop App and you should see it appear.
 
 First, clone this repository locally:
 
-    git clone https://github.com/jerpint/paperpal
+    git clone https://github.com/milatechtransfer/paperpal
 
 
 Add this to the root of the project in a `.cursor/mcp.json` file:
